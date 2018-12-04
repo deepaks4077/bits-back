@@ -3,7 +3,7 @@ This class contains the code to encode/decode data using BB-ANS
 """
 
 from ans import ANSCoder
-
+import numpy as np
 import distributions
 
 def BBANS_append(posterior_pop, likelihood_append, prior_append):
@@ -13,8 +13,8 @@ def BBANS_append(posterior_pop, likelihood_append, prior_append):
     """
 
     def append(ans, data):
-        latent = posterior_pop(ans, data)
-        likelihood_append(ans, latent, data)
+        latent = posterior_pop(data)(ans)
+        likelihood_append(latent)(data)
         prior_append(ans, latent)
 
     return append
@@ -54,7 +54,7 @@ def VAE_append(latent_shape, generative_model, recognition_model,
                 for mean, stdd in zip(posterior_mean, posterior_stdd)]
 
         ppfs = [distributions.gaussian_latent_ppf(mean, stdd, prior_precision, latent_precision)
-                for mean, stdd in zup(posterior_mean, posterior_stdd)]
+                for mean, stdd in zip(posterior_mean, posterior_stdd)]
 
         return distributions.distr_pop(latent_precision, ppfs, cdfs)
 

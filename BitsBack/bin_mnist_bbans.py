@@ -5,22 +5,16 @@ nn.Module from PyTorch.
 
 import torch
 import numpy as np
+from numpy.random import RandomState
 
 from numpy_torch_interface import torch_to_numpy_function
 
 from bbans import VAE_append, VAE_pop
 from ans import ANSCoder
 import distributions
+import bin_vae_original
+import datasets
 
-"""
-import util
-import rans
-from tvae_binary import BinaryVAE
-import tvae_utils
-from torchvision import datasets, transforms
-from torch.distributions import Bernoulli
-import time
-"""
 
 def build_append_pop(prior_precision, bernoulli_precision, q_precision, hidden_dim, latent_dim, model, path_to_params:str):
     """
@@ -43,9 +37,59 @@ def build_append_pop(prior_precision, bernoulli_precision, q_precision, hidden_d
     latent_shape = (latent_dim,)
 
     append = VAE_append(latent_shape, generative_model, recognition_model,
-                        obs_append, prior_precision, latent_precision)
+                        obs_append, prior_precision, q_precision)
 
     pop = VAE_append(latent_shape, generative_model, recognition_model,
-             obs_pop, prior_precision, latent_precision)
+             obs_pop, prior_precision, q_precision)
 
     return append, pop
+
+
+
+
+
+
+if __name__ == '__main__':
+    """
+    Test the binary mnist on VAE BBANS 
+    """
+
+    prior_precision = 8
+    bernoulli_precision = 12
+    q_precision = 14
+
+    latent_dim = 40
+    hidden_dim = 100
+
+    ans = ANSCoder()
+
+    model = bin_vae_original.BinaryVAE()
+
+    path_to_params = 'OriginalParameters/torch_binary_vae_params_new'
+
+    append, pop = build_append_pop(prior_precision, bernoulli_precision, q_precision, hidden_dim, latent_dim, model, path_to_params)
+
+
+    #
+    # Get images to compress
+    #
+
+    rng = RandomState(0)
+
+    images = datasets.get_binarized_MNIST(rng, False)[:10]
+    images = [image.flatten() for image in images]
+    original_length = 32 * len(images) * len(images[0])     #using a float32 per pixel. Could be optimized to 8 bits per pixel.
+
+    # generate some random bits for the
+
+    other_bits = rng.randint(low=1 << 16, high=1 << 31, size=20, dtype=np.uint32) # total of 640 bits
+    ans.from_array(other_bits)
+
+
+    for i in range(0, len(images)):
+        image = images[i]
+        append(ans, image)
+        print("Completed an image")
+
+    compressed_length = 32 * len(ans.to_array())
+    print('Compressed length: ' + str(compressed_length))

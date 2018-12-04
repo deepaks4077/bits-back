@@ -4,6 +4,7 @@ a distribution and convert to start/frequency
 """
 from ans import ANSCoder
 from scipy.stats import norm
+import numpy as np
 
 def uniforms_append(precision):
     """
@@ -55,7 +56,7 @@ def distr_pop(precision, ppdfs, cdfs):
             index = ppf(bits)
             start = cdf(index)
             frequency = cdf(index + 1) - start
-            symbol = pop_symbol(start, frequency)
+            symbol = pop_symbol(ans, start, frequency)
             symbols.append(symbol)
 
         return np.array(symbols)

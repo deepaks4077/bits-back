@@ -52,11 +52,21 @@ def get_binarized_MNIST(random_state, use_training_set=False):
     Returns:
     numpy.ndarray of shape (n, 28, 28) with dtype bool
     """
-    mnist = download_MNIST(use_training_set)
+    mnist = get_MNIST_array(use_training_set)
     probabilities = mnist / 255
-    b_mnist = random_state.random_sample(np.shape(probabilities)) < probabilities   # returns a numpy array of booleans
+    b_mnist = (random_state.random_sample(np.shape(probabilities)) < probabilities).astype(np.float32)   # returns a numpy array of booleans
     
     return b_mnist
 
 
-    
+if __name__ == '__main__':
+    """
+    Test the data functions
+    """
+    rng = RandomState(0)
+    mnist = get_binarized_MNIST(rng, False)
+
+    print(mnist[0].dtype)
+
+
+
