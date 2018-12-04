@@ -14,7 +14,7 @@ def BBANS_append(posterior_pop, likelihood_append, prior_append):
 
     def append(ans, data):
         latent = posterior_pop(data)(ans)
-        likelihood_append(latent)(data)
+        likelihood_append(latent)(ans, data)
         prior_append(ans, latent)
 
     return append

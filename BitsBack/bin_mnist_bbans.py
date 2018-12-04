@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     ans = ANSCoder()
 
-    model = bin_vae_original.BinaryVAE()
+    model = bin_vae_original.BinaryVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
 
     path_to_params = 'OriginalParameters/torch_binary_vae_params_new'
 
@@ -92,4 +92,6 @@ if __name__ == '__main__':
         print("Completed an image")
 
     compressed_length = 32 * len(ans.to_array())
+    bits_per_pixel = compressed_length / (784 * 10.0)
     print('Compressed length: ' + str(compressed_length))
+    print('Bits per pixel: ' + str(bits_per_pixel))

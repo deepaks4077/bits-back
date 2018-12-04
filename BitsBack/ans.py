@@ -167,4 +167,4 @@ def test_ANS(length):
 
 
 if __name__ == "__main__":
-    test_ANS(1)
+    test_ANS(1000)

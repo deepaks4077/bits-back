@@ -56,8 +56,8 @@ def distr_pop(precision, ppdfs, cdfs):
             index = ppf(bits)
             start = cdf(index)
             frequency = cdf(index + 1) - start
-            symbol = pop_symbol(ans, start, frequency)
-            symbols.append(symbol)
+            pop_symbol(ans, start, frequency)
+            symbols.append(index)
 
         return np.array(symbols)
 
@@ -67,8 +67,8 @@ def create_bernoulli_buckets(p, precision):
     """
     Split the pdf according to the probability of the symbols (2 in this case)
     """
-    buckets = np.array([ np.rint(    p    * (1 << precision) - 2) + 1,
-                         np.rint(( 1 - p) * (1 << precision) - 2) + 1 ])
+    buckets = np.array([ np.rint(    p    * ((1 << precision) - 2)) + 1,
+                         np.rint(( 1 - p) * ((1 << precision) - 2)) + 1 ])
     
     # fix the buckets if the sum is not correct
     bucket_sum = sum(buckets)

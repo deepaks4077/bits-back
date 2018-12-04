@@ -105,7 +105,7 @@ if __name__ == '__main__':
     batch_size = 100
     randomise_data = True
 
-    model = BinaryVAE()
+    model = BinaryVAE(100, 40)
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
     class Randomise:
