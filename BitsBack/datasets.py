@@ -19,11 +19,25 @@ def download_MNIST(use_training_set=False):
     """
     mnist = datasets.MNIST('Datasets\\MNIST', train=False, download=True, 
     transform=transforms.Compose([transforms.ToTensor()]))
+    return mnist
+    
+def get_dataset_MNIST(use_training_set):
+    mnist = download_MNIST()
+
+    if(use_training_set == True):
+        return mnist.train_data
+    else:
+        return mnist.test_data
+
+
+def get_MNIST_array(use_training_set):
+    mnist = download_MNIST()
+
     if(use_training_set == True):
         return mnist.train_data.numpy()
     else:
         return mnist.test_data.numpy()
-    
+
 def get_binarized_MNIST(random_state, use_training_set=False):
     """
     Build a binarized version of MNIST. 

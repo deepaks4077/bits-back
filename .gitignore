@@ -6,3 +6,6 @@ BitsBack/Datasets/MNIST/raw/t10k-labels-idx1-ubyte
 BitsBack/Datasets/MNIST/processed/training.pt
 BitsBack/Datasets/MNIST/raw/train-images-idx3-ubyte
 *.code-workspace
+BitsBack/Results/
+BitsBack/OriginalParameters/
+BitsBack/__pycache__/
