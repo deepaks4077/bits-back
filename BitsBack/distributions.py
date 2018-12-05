@@ -5,6 +5,7 @@ a distribution and convert to start/frequency
 from ans import ANSCoder
 from scipy.stats import norm
 import numpy as np
+import torch
 
 def uniforms_append(precision):
     """
@@ -28,7 +29,9 @@ def uniforms_pop(precision, n):
             cf, pop = ans.pop(precision)
             start = cf
             freq = 1
-            symbols.append(pop(ans, start, freq))
+            pop(ans, start, freq)
+            symbols.append(cf)
+        return symbols
     return pop
 
 def distr_append(precision, cdfs):
@@ -116,7 +119,7 @@ def bernoullis_pop(probs, precision):
     probs is a list of probabilities.
     Returns a pop function using the bernoulli distribution
     """
-    data_shape = np.shape(probs)[:-1]
+    data_shape = np.shape(probs) #[:-1]
     cdfs = [bernoulli_cdf(p, precision) for p in probs]
     ppfs = [bernoulli_ppf(p, precision) for p in probs]
 

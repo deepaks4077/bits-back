@@ -39,7 +39,7 @@ def build_append_pop(prior_precision, bernoulli_precision, q_precision, hidden_d
     append = VAE_append(latent_shape, generative_model, recognition_model,
                         obs_append, prior_precision, q_precision)
 
-    pop = VAE_append(latent_shape, generative_model, recognition_model,
+    pop = VAE_pop(latent_shape, generative_model, recognition_model,
              obs_pop, prior_precision, q_precision)
 
     return append, pop
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     #
 
     rng = RandomState(0)
-    image_count = 100
+    image_count = 20
 
     images = datasets.get_binarized_MNIST(rng, False)[:image_count]
     images = [image.flatten() for image in images]
@@ -83,19 +83,30 @@ if __name__ == '__main__':
 
     # generate some random bits for the
 
-    other_bits = rng.randint(low=0, high=((1 << 32) - 1), size=12, dtype=np.uint32) # total of 640 bits
-    ans.from_array(other_bits)
+    random_bits = rng.randint(low=0, high=((1 << 32) - 1), size=12, dtype=np.uint32) # total of 640 bits
+    ans.from_array(random_bits)
 
-
+    print("Encoding...")
     for i in range(0, len(images)):
         image = images[i]
         append(ans, image)
-        print("Completed an image")
 
     compressed_length = 32 * len(ans.to_array())
-    
+
     bits_per_pixel = compressed_length / (784 * float(image_count))
 
     print("Original length: " + str(original_length))
     print('Compressed length: ' + str(compressed_length))
     print('Bits per pixel: ' + str(bits_per_pixel))
+
+    print("Decoding...")
+
+    for i in range(len(images) - 1, -1, -1):
+        image = pop(ans)
+        image = image.detach().numpy()
+        original_image = images[i]
+        assert all(original_image == image)
+
+    # this verifies that all bits from the images have been removed and the ans state is restored
+    assert all(ans.to_array() == random_bits)
+    print("Decoded all images successfully")

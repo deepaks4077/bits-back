@@ -27,8 +27,8 @@ def BBANS_pop(prior_pop, likelihood_pop, posterior_append):
 
     def pop(ans):
         latent = prior_pop(ans)
-        data = likelihood_pop(ans, latent)
-        posterior_append(ans, latent, data)
+        data = likelihood_pop(latent)(ans)
+        posterior_append(data)(ans, latent)
         return data
     return pop
 
@@ -77,7 +77,7 @@ def VAE_pop(latent_shape, generative_model, recognition_model,
     prior_pop = distributions.uniforms_pop(prior_precision, np.prod(latent_shape))
 
     def likelihood_pop(latent_indices):
-        y = standard_gaussian_centers(prior_precision)[latent_indices]
+        y = distributions.standard_gaussian_centers(prior_precision)[latent_indices]
         obs_params = generative_model(np.reshape(y, latent_shape))
         return obs_pop(obs_params)
 
