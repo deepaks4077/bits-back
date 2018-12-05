@@ -23,8 +23,8 @@ class ANSCoder:
         
         self.state:[uint64] = []
 
-        self.tail:uint64    = ( 1 << 32) - 1        # 0x 00 00 00 00 FF FF FF FF
-        self.l:uint64       = ( 1 << 31)            # 0x 00 00 00 00 80 00 00 00
+        self.tail:uint64    = (1 << 32) - 1        # 0x 00 00 00 00 FF FF FF FF
+        self.l:uint64       = (1 << 31)            # 0x 00 00 00 00 80 00 00 00
 
         self.state.append(self.l)
 
@@ -47,8 +47,7 @@ class ANSCoder:
 
         # compute new value at the head
         # // : integer divison
-        test = (x % frequency) + start
-        self.state[0] = ((x // frequency) << precision) + test
+        self.state[0] = ((x // frequency) << precision) + (x % frequency) + start
         
             
     def pop(self, precision):
@@ -59,10 +58,9 @@ class ANSCoder:
         """
         x = self.state[0]
         mask = ((1 << precision) - 1)
-        bits = x & mask
+        bits = x & mask         # cumulative frequency
         def pop(self, start, frequency):
-            test = start - bits
-            self.state[0] =  (frequency * (self.state[0] >> precision)) - test
+            self.state[0] =  (frequency * (self.state[0] >> precision)) + bits - start
             
             # update state
             if self.state[0] < self.l:

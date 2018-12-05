@@ -9,3 +9,4 @@ BitsBack/Datasets/MNIST/raw/train-images-idx3-ubyte
 BitsBack/Results/
 BitsBack/OriginalParameters/
 BitsBack/__pycache__/
+BitsBack/.vscode/

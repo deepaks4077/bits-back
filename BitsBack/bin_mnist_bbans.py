@@ -75,14 +75,15 @@ if __name__ == '__main__':
     #
 
     rng = RandomState(0)
+    image_count = 100
 
-    images = datasets.get_binarized_MNIST(rng, False)[:10]
+    images = datasets.get_binarized_MNIST(rng, False)[:image_count]
     images = [image.flatten() for image in images]
     original_length = 32 * len(images) * len(images[0])     #using a float32 per pixel. Could be optimized to 8 bits per pixel.
 
     # generate some random bits for the
 
-    other_bits = rng.randint(low=1 << 16, high=1 << 31, size=20, dtype=np.uint32) # total of 640 bits
+    other_bits = rng.randint(low=0, high=((1 << 32) - 1), size=12, dtype=np.uint32) # total of 640 bits
     ans.from_array(other_bits)
 
 
@@ -92,6 +93,9 @@ if __name__ == '__main__':
         print("Completed an image")
 
     compressed_length = 32 * len(ans.to_array())
-    bits_per_pixel = compressed_length / (784 * 10.0)
+    
+    bits_per_pixel = compressed_length / (784 * float(image_count))
+
+    print("Original length: " + str(original_length))
     print('Compressed length: ' + str(compressed_length))
     print('Bits per pixel: ' + str(bits_per_pixel))

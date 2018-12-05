@@ -67,8 +67,8 @@ def create_bernoulli_buckets(p, precision):
     """
     Split the pdf according to the probability of the symbols (2 in this case)
     """
-    buckets = np.array([ np.rint(    p    * ((1 << precision) - 2)) + 1,
-                         np.rint(( 1 - p) * ((1 << precision) - 2)) + 1 ])
+    buckets = np.array([ np.rint(( 1 - p) * ((1 << precision) - 2)) + 1,
+                         np.rint(    p    * ((1 << precision) - 2)) + 1 ])
     
     # fix the buckets if the sum is not correct
     bucket_sum = sum(buckets)
