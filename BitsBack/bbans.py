@@ -82,7 +82,7 @@ def VAE_pop(latent_shape, generative_model, recognition_model,
         return obs_pop(obs_params)
 
     def posterior_append(data):
-        posterior_mean, posterior_stdd = recognition_model(data)
+        posterior_mean, posterior_stdd = recognition_model(np.atleast_2d(data))
         posterior_mean = np.ravel(posterior_mean)
         posterior_stdd = np.ravel(posterior_stdd)
         cdfs = [distributions.gaussian_latent_cdf(mean, stdd, prior_precision, latent_precision)
