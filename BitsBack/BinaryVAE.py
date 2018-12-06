@@ -16,9 +16,11 @@ https://github.com/pytorch/examples/blob/master/vae/main.py
 
 __authors__ = ["Deepak Sharma"]
 
+
 from typing import Tuple, List, Union, Dict
 import argparse
 import numpy as np
+from comet_ml import Experiment
 import torch
 import torch.utils.data
 from torch import nn, optim
@@ -28,16 +30,18 @@ from torch.distributions import Normal, Bernoulli
 from torchvision.utils import save_image
 
 parser = argparse.ArgumentParser(description='VAE with a bernoulli likelihood')
-parser.add_argument('--batch-size', type=int, default=128,
-                    help='input batch size for training (default: 128)')
+parser.add_argument('--batch-size', type=int, default=100,
+                    help='input batch size for training (default: 100)')
+parser.add_argument('--model-filename-prefix', type=str, default="torch_new_bb",
+                    help='path to save the model params  (default: torch_new_bb)')
 parser.add_argument('--hidden-dim', type=int, default=100,
                     help='hidden dimension size of encoder and decoder')
 parser.add_argument('--learning-rate', type=int, default=-3,
                     help='exponent of the learning rate e^(input) (default = -3)')
-parser.add_argument('--latent-dim', type=int, default=40,
+parser.add_argument('--latent-dim', type=int, default=20,
                     help='dimensions of latent space Z')
-parser.add_argument('--epochs', type=int, default=10,
-                    help='number of epochs to train (default: 10)')
+parser.add_argument('--epochs', type=int, default=20,
+                    help='number of epochs to train (default: 20)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
 parser.add_argument('--seed', type=int, default=1,
@@ -49,6 +53,11 @@ args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 device = torch.device("cuda" if args.cuda else "cpu")
 kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
+model_filename_suffix = "{}_{}_{}_{}_{}_{}".format(args.batch_size, args.hidden_dim, args.latent_dim, args.epochs, args.no_cuda, abs(args.learning_rate))
+model_filename = "{}_{}".format(args.model_filename_prefix, model_filename_suffix)
+
+experiment = Experiment(api_key="Gncqbz3Rhfy3MZJBcX7xKVJoo", project_name="comp551", workspace="deepak-sharma-mail-mcgill-ca")
+experiment.log_multiple_params(vars(args))
 
 class Randomise:
     def __call__(self, pic):
@@ -71,71 +80,108 @@ class BinaryVAE(nn.Module):
         self.fc22 = nn.Linear(self.hidden_dim, self.latent_dim)
         self.fc3 = nn.Linear(self.latent_dim, self.hidden_dim)
         self.fc4 = nn.Linear(self.hidden_dim, self.data_size)
+        self.sigmoid = nn.Sigmoid()
+
+        print("Total size = {}".format(self.data_size * self.n_channels))
 
     def encode(self, x):
-        h1 = F.relu(self.fc1(x))
+        x_reshaped = x.view(-1, self.data_size)
+        h0 = self.fc1(x_reshaped)
+        h1 = F.relu(h0)
         return self.fc21(h1), self.fc22(h1)
 
     def decode(self, z):
         h3 = F.relu(self.fc3(z))
-        return torch.sigmoid(self.fc4(h3))
+        print(h3)
+        return self.sigmoid(self.fc4(h3))
 
     def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5*logvar)
+        std = torch.exp(logvar)
         eps = torch.randn_like(std)
         return eps.mul(std).add_(mu)
 
     def forward(self, x):
         mu, logvar = self.encode(x.view(-1, self.data_size * self.n_channels))
         z = self.reparameterize(mu, logvar)
-        return self.decode(z), mu, logvar
+        return self.decode(z), z, mu, logvar
 
     # Reconstruction + KL divergence losses summed over all elements and batch
     def loss(self, x):
-        recon_x, mu, logvar = self.forward(x)
-        BCE = F.binary_cross_entropy(recon_x, x.view(-1, self.data_size * self.n_channels), reduction='sum')
-        KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+        #recon_x, z, mu, logvar = self.forward(x)
+        mu, logvar = self.encode(x)
+        z = self.reparameterize(mu, logvar)
+        recon_x = self.decode(z)
+        #print(recon_x, z, mu, logvar)
+        dist = Bernoulli(recon_x)
+        l = torch.sum(dist.log_prob(x.view(-1, 784)), dim=1)
+        a = torch.tensor([0.0]).to(device)
+        b = torch.tensor([1.0]).to(device)
+        p_z = torch.sum(Normal(a, b).log_prob(z), dim=1)
+        q_z = torch.sum(Normal(mu, torch.exp(logvar)).log_prob(z), dim=1)
+        
+        #KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim = 1)
 
-        return BCE + KLD
+        res = -torch.mean(l + p_z - q_z) * np.log2(np.e) / 784
+
+        return res
+
+    def lossv2(self, x):
+        recon_x, z, mu, logvar = self.forward(x)
+        BCE = F.binary_cross_entropy(recon_x, 
+                                     x.view(-1, self.data_size * self.n_channels), 
+                                     reduce = False)
+        KLD = 0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+
+        return torch.mean(torch.sum(BCE, dim = 1) - KLD) / 784.
 
     def sample(self, n = 64):
-        z = torch.randn(n, self.latent_dim)
-        x_recon, _, __ = self.decode(z)
+        z = torch.randn(n, self.latent_dim).to(device)
+        x_recon = self.decode(z)
         return x_recon
 
 
 def train(model, epoch, data_loader, optimizer, log_interval=10):
     model.train()
     train_loss = 0
-    for batch_idx, (data, _) in enumerate(data_loader):
-        data = data.to(device)
-        optimizer.zero_grad()
-        loss = model.loss(data)
-        loss.backward()
-        train_loss += loss.item()
-        optimizer.step()
-        if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(data_loader.dataset),
-                100. * batch_idx / len(data_loader),
-                loss.item() / len(data)))
+    i = 0
+    with experiment.train():
+        for batch_idx, (data, _) in enumerate(data_loader):
+            experiment.set_step(batch_idx)
+            
+            data = data.to(device)
+            optimizer.zero_grad()
+            loss = model.loss(data)
+            loss.backward()
+            train_loss += loss.item()
+            optimizer.step()
+            i += 1
+            experiment.log_metric("batch_loss", loss.item())
+            if batch_idx % log_interval == 0:
+                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                    epoch, batch_idx * len(data), len(data_loader.dataset),
+                    100. * batch_idx / len(data_loader),
+                    loss.item()))
 
     print('====> Epoch: {} Average loss: {:.4f}'.format(
-          epoch, train_loss / len(data_loader.dataset)))
+          epoch, train_loss / len(data_loader)))
+
+    experiment.log_metric("training_loss", train_loss/len(data_loader), epoch)
 
 
 def test(model, epoch, data_loader):
     model.eval()
     test_loss = 0
-    with torch.no_grad():
-        for i, (data, _) in enumerate(data_loader):
-            data = data.to(device)
-            recon_x, mu, logvar = model(data)
+    with experiment.test():
+        with torch.no_grad():
+            for i, (data, _) in enumerate(data_loader):
+                experiment.set_step(i)
+                data = data.to(device)
+                recon_x, z, mu, logvar = model(data)
 
 def run():
 
     model = BinaryVAE(784, 1, args.hidden_dim, args.latent_dim).to(device)
-    optimizer = optim.Adam(model.parameters(), lr=torch.exp(args.learning_rate)).to(device)
+    optimizer = optim.Adam(model.parameters(), lr=np.exp(args.learning_rate))
 
     if args.randomize:
         binariser = Randomise()
@@ -144,8 +190,7 @@ def run():
     
     train_loader = torch.utils.data.DataLoader(
         datasets.MNIST('data/mnist', train=True, download=True,
-                       transform=transforms.Compose([transforms.ToTensor(), binariser])),
-        batch_size=args.batch_size, shuffle=True, **kwargs)
+                       transform=transforms.Compose([transforms.ToTensor(), binariser])), batch_size=args.batch_size, shuffle=True, **kwargs)
 
     test_loader = torch.utils.data.DataLoader(
         datasets.MNIST('data/mnist', train=False, download=True,
@@ -155,13 +200,14 @@ def run():
     try:
         for epoch in range(1, args.epochs + 1):
             train(model, epoch, train_loader, optimizer)
+            experiment.log_epoch_end(epoch, step=None)
             test(model, epoch, test_loader)
-            sample = model.sample(epoch)
+            sample = model.sample(64)
             save_image(sample.cpu().view(64, 1, 28, 28),
-                         'results/sample_' + str(epoch) + '.png')
+                         'results/sample_{}_'.format(model_filename_suffix) + str(epoch) + '.png')
     except KeyboardInterrupt:
-        torch.save(model.state_dict(), 'saved_params/torch_binary_vae_params_new')
-    torch.save(model.state_dict(), 'saved_params/torch_binary_vae_params_new')
+        torch.save(model.state_dict(), 'saved_params/{}'.format(model_filename))
+    torch.save(model.state_dict(), 'saved_params/{}'.format(model_filename))
 
 if __name__ == "__main__":
     run()
