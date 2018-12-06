@@ -100,9 +100,9 @@ def original_bernoulli_example(number_images, result_path:str):
 
 # New VAEs experiments:
 
-def bernoulli_100_100_40_50_False_5(number_images, result_path:str):
+def bernoulli_100_100_40_20_False_5(number_images, result_path:str):
     """
-    Run experiment on 100_100_40_50_False_5 model
+    Run experiment on bb_binary_vae_100_100_40_20_False_5 model
     """
     seed = 0
 
@@ -120,7 +120,7 @@ def bernoulli_100_100_40_50_False_5(number_images, result_path:str):
     result = Result()
 
     model = BinaryVAE.BinaryVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
-    model.load_state_dict(torch.load('Parameters/binary_vae_100_100_40_50_False_5', map_location='cpu'))
+    model.load_state_dict(torch.load('Parameters/bb_binary_vae_100_100_40_20_False_5', map_location='cpu'))
 
     generative_model = torch_to_numpy_function(model.decode)
     recognition_model = torch_to_numpy_function(model.encode)
