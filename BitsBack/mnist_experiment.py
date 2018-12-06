@@ -12,18 +12,21 @@ from numpy.random import RandomState
 from numpy_torch_interface import torch_to_numpy_function
 from bbans import VAE_append, VAE_pop
 from ans import ANSCoder
+from result import Result
 
-def original_bbinomial_example(number_images):
+def original_bbinomial_example(number_images, result_path:str):
     """
     Run a test session
     """
-
-    rng = RandomState(0)
+    seed = 0
+    rng = RandomState(seed)
     image_count = number_images
 
     prior_precision = 8
     beta_binomial_precision = 14
     q_precision = 14
+
+    random_count = 50
 
     latent_dim = 50
     hidden_dim = 200
@@ -55,7 +58,7 @@ def original_bbinomial_example(number_images):
 
     # generate some random bits for the
 
-    random_bits = rng.randint(low=0, high=((1 << 32) - 1), size=50, dtype=np.uint32) # some amount of bits 
+    random_bits = rng.randint(low=0, high=((1 << 32) - 1), size=random_count, dtype=np.uint32) # some amount of bits 
     ans.from_array(random_bits)
 
     print("Encoding...")
@@ -64,12 +67,6 @@ def original_bbinomial_example(number_images):
         append(ans, image)
 
     compressed_length = 32 * len(ans.to_array())
-
-    bits_per_pixel = compressed_length / (784 * float(image_count))
-
-    print("Original length: " + str(original_length))
-    print('Compressed length: ' + str(compressed_length))
-    print('Bits per pixel: ' + str(bits_per_pixel))
 
     print("Decoding...")
 
@@ -82,3 +79,25 @@ def original_bbinomial_example(number_images):
     # this verifies that all bits from the images have been removed and the ans state is restored
     assert all(ans.to_array() == random_bits)
     print("Decoded all images successfully")
+
+
+    result = Result()
+
+    result.exp_name = 'Compression of MNIST dataset using BBANS with Beta Binomial distribution'
+    result.method_name = 'BBANS using VAE with Beta Binomial latent variables'
+    result.path_to_model = 'OriginalParameters/torch_vae_beta_binomial_params'
+    result.image_count = image_count
+    result.latent_precision = beta_binomial_precision
+    result.prior_precision = prior_precision
+    result.posterior_precision = q_precision
+    result.hidden_size = hidden_dim
+    result.latent_size = latent_dim
+    result.image_shape = (28, 28)
+    result.random_bits_count = random_count * 32
+    result.seed = seed
+    result.original_length = original_length
+    result.compressed_length = compressed_length
+    result.encode_success = True
+    result.decode_success = True
+
+    result.to_file(result_path)

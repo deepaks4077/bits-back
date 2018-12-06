@@ -6,28 +6,31 @@ import numpy as np
 import distributions
 import bin_vae_original
 import datasets
+from result import Result
 from bernoulli_bbans import build_bernoulli_bbans
 from numpy.random import RandomState
 from numpy_torch_interface import torch_to_numpy_function
 from bbans import VAE_append, VAE_pop
 from ans import ANSCoder
 
-def original_bernoulli_example(number_images):
+def original_bernoulli_example(number_images, result_path:str):
     """
     Test the binary mnist on VAE BBANS 
     """
+    seed = 0
 
-    rng = RandomState(0)
+    rng = RandomState(seed)
     image_count = number_images
 
     prior_precision = 8
     bernoulli_precision = 12
     q_precision = 14
-
+    random_count = 12
     latent_dim = 40
     hidden_dim = 100
 
     ans = ANSCoder()
+    result = Result()
 
     model = bin_vae_original.BinaryVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
     model.load_state_dict(torch.load('OriginalParameters/torch_binary_vae_params_new'))
@@ -40,17 +43,15 @@ def original_bernoulli_example(number_images):
     append, pop = build_bernoulli_bbans(prior_precision, bernoulli_precision, q_precision, generative_model, recognition_model, latent_shape)
 
 
-    #
     # Get images to compress
-    #
 
     images = datasets.get_binarized_MNIST(rng, False)[:image_count]
     images = [image.flatten() for image in images]
     original_length = 32 * len(images) * len(images[0])     #using a float32 per pixel. Could be optimized to 8 bits per pixel.
 
-    # generate some random bits for the
+    # generate some random bits
 
-    random_bits = rng.randint(low=0, high=((1 << 32) - 1), size=12, dtype=np.uint32) # total of 640 bits
+    random_bits = rng.randint(low=0, high=((1 << 32) - 1), size=random_count, dtype=np.uint32) 
     ans.from_array(random_bits)
 
     print("Encoding...")
@@ -59,12 +60,6 @@ def original_bernoulli_example(number_images):
         append(ans, image)
 
     compressed_length = 32 * len(ans.to_array())
-
-    bits_per_pixel = compressed_length / (784 * float(image_count))
-
-    print("Original length: " + str(original_length))
-    print('Compressed length: ' + str(compressed_length))
-    print('Bits per pixel: ' + str(bits_per_pixel))
 
     print("Decoding...")
 
@@ -76,4 +71,27 @@ def original_bernoulli_example(number_images):
 
     # this verifies that all bits from the images have been removed and the ans state is restored
     assert all(ans.to_array() == random_bits)
-    print("Decoded all images successfully")
+
+    print("All images  decoded successfully!")
+
+
+    result = Result()
+
+    result.exp_name = 'Compression of binarized MNIST dataset using BBANS with Bernoulli distribution'
+    result.method_name = 'BBANS using VAE with Bernoulli latent variables'
+    result.path_to_model = 'OriginalParameters/torch_binary_vae_params_new'
+    result.image_count = image_count
+    result.latent_precision = bernoulli_precision
+    result.prior_precision = prior_precision
+    result.posterior_precision = q_precision
+    result.hidden_size = hidden_dim
+    result.latent_size = latent_dim
+    result.image_shape = (28, 28)
+    result.random_bits_count = random_count * 32
+    result.seed = seed
+    result.original_length = original_length
+    result.compressed_length = compressed_length
+    result.encode_success = True
+    result.decode_success = True
+
+    result.to_file(result_path)

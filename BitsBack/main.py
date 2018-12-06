@@ -8,13 +8,12 @@ from mnist_experiment import original_bbinomial_example
 
 def main():
     """
-    Run examples
+    Run examples. Note: If an experiment fails in ans.pop, try adding more random bits
     """
-    #original_bernoulli_example(10)
-    original_bbinomial_example(10)
+    #original_bernoulli_example(100, 'bin_mnist_original_results.txt')
+    original_bbinomial_example(100, 'mnist_original_results.txt')
 
     
-
 def download_datasets():
     datasets.download_MNIST()
 
