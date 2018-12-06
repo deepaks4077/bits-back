@@ -5,16 +5,16 @@ Experimental setup:
 RandomState seed: 0
 Number of images: 200
 Image shape: (28, 28)
-Model path: Parameters/bb_binary_vae_100_100_40_20_False_5
+Model path: Parameters/binary_vae_100_150_40_20_False_5
 Encode/Decode successful: True
 Number of random bits: 384
 Prior precision: 8
 Latent precision: 12
 Posterior precision: 14
 Latent dimensions: 40
-Hidden dimensions: 100
+Hidden dimensions: 150
 
 Results:
 Original size: 5017600 bits
-Encoded size: 33344 bits
-Bits per pixel: 0.21020408163265306
+Encoded size: 31744 bits
+Bits per pixel: 0.2

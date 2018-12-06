@@ -101,10 +101,46 @@ def original_bernoulli_example(number_images, result_path:str):
 # New VAEs experiments:
 
 def bernoulli_100_100_40_20_False_5(number_images, result_path:str):
+    path = 'Parameters/bb_binary_vae_100_100_40_20_False_5'
+    latent_dim = 40
+    hidden_dim = 100
+    model = BinaryVAE.BinaryVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
+    model.load_state_dict(torch.load(path, map_location='cpu'))
+    bernoulli_experiment(number_images, result_path, latent_dim, hidden_dim, model, path)
+
+def bernoulli_100_100_20_20_False_3(number_images, result_path:str):
+    path = 'Parameters/binary_vae_100_100_20_20_False_3'
+    latent_dim = 20
+    hidden_dim = 100
+    model = BinaryVAE.BinaryVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
+    model.load_state_dict(torch.load(path, map_location='cpu'))
+    bernoulli_experiment(number_images, result_path, latent_dim, hidden_dim, model, path)
+
+def bernoulli_100_150_20_20_False_5(number_images, result_path:str):
+    path = 'Parameters/binary_vae_100_150_20_20_False_5'
+    latent_dim = 20
+    hidden_dim = 150
+    model = BinaryVAE.BinaryVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
+    model.load_state_dict(torch.load(path, map_location='cpu'))
+    bernoulli_experiment(number_images, result_path, latent_dim, hidden_dim, model, path)
+
+def bernoulli_100_150_40_20_False_5(number_images, result_path:str):
+    path = 'Parameters/binary_vae_100_150_40_20_False_5'
+    latent_dim = 40
+    hidden_dim = 150
+    model = BinaryVAE.BinaryVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
+    model.load_state_dict(torch.load(path, map_location='cpu'))
+    bernoulli_experiment(number_images, result_path, latent_dim, hidden_dim, model, path)
+
+def bernoulli_experiment(number_images, result_path, latent_dim, hidden_dim, model, path):
     """
-    Run experiment on bb_binary_vae_100_100_40_20_False_5 model
+    Run an experiment given the model
     """
     seed = 0
+    random_count = 12
+
+    generative_model = torch_to_numpy_function(model.decode)
+    recognition_model = torch_to_numpy_function(model.encode)
 
     rng = RandomState(seed)
     image_count = number_images
@@ -112,23 +148,13 @@ def bernoulli_100_100_40_20_False_5(number_images, result_path:str):
     prior_precision = 8
     bernoulli_precision = 12
     q_precision = 14
-    random_count = 12
-    latent_dim = 40
-    hidden_dim = 100
 
+
+    latent_shape = (latent_dim,)
     ans = ANSCoder()
     result = Result()
 
-    model = BinaryVAE.BinaryVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
-    model.load_state_dict(torch.load('Parameters/bb_binary_vae_100_100_40_20_False_5', map_location='cpu'))
-
-    generative_model = torch_to_numpy_function(model.decode)
-    recognition_model = torch_to_numpy_function(model.encode)
-
-    latent_shape = (latent_dim,)
-
     append, pop = build_bernoulli_bbans(prior_precision, bernoulli_precision, q_precision, generative_model, recognition_model, latent_shape)
-
 
     # Get images to compress
 
@@ -166,7 +192,7 @@ def bernoulli_100_100_40_20_False_5(number_images, result_path:str):
 
     result.exp_name = 'Compression of binarized MNIST dataset using BBANS with Bernoulli distribution'
     result.method_name = 'BBANS using VAE with Bernoulli latent variables'
-    result.path_to_model = 'Parameters/binary_vae_100_100_40_50_False_5'
+    result.path_to_model = path
     result.image_count = image_count
     result.latent_precision = bernoulli_precision
     result.prior_precision = prior_precision
@@ -182,3 +208,4 @@ def bernoulli_100_100_40_20_False_5(number_images, result_path:str):
     result.decode_success = True
 
     result.to_file(result_path)
+    
