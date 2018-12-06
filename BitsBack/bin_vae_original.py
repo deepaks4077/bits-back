@@ -1,6 +1,8 @@
 """
-Delete me before submission.
+Taken from https://github.com/bits-back/bits-back to reproduce the results from the conference paper.
+
 This file contains the original vae for the binarized mnist dataset using bernoulli latent variables
+
 """
 import torch
 import torch.utils.data

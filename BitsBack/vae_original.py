@@ -1,5 +1,5 @@
 """
-Delete me before submission.
+Taken from https://github.com/bits-back/bits-back to reproduce the results from the conference paper.
 This file contains the original vae for the mnist dataset using beta binomial latent variables
 """
 

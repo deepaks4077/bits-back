@@ -3,15 +3,17 @@ The main testing coding is launched from here
 """
 
 import datasets
-from bin_minst_experiment import original_bernoulli_example
+from bin_minst_experiment import original_bernoulli_example, bernoulli_100_100_40_50_False_5
 from mnist_experiment import original_bbinomial_example
+
 
 def main():
     """
     Run examples. Note: If an experiment fails in ans.pop, try adding more random bits
     """
-    #original_bernoulli_example(100, 'bin_mnist_original_results.txt')
-    original_bbinomial_example(100, 'mnist_original_results.txt')
+    original_bernoulli_example(200, 'bin_mnist_original_results.txt')
+    #original_bbinomial_example(100, 'mnist_original_results.txt')
+    #bernoulli_100_100_40_50_False_5(100, 'bin_mnist_100_100_40_50_False_5_results.txt')
 
     
 def download_datasets():
