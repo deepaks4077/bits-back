@@ -1,3 +1,7 @@
+"""
+Delete me before submission.
+This file contains the original vae for the binarized mnist dataset using bernoulli latent variables
+"""
 import torch
 import torch.utils.data
 from torch import nn, optim

@@ -1,6 +1,9 @@
 """
 This file contains helper functions to pop and append given
-a distribution and convert to start/frequency
+a distribution and convert to start/frequency given distribution.
+The bucket methods generate a list of buckets each trying to represent equivalent weight of the cdf.
+The ppf function gives the value of the random variable to obtain the cdf for some specified probability.
+In this case, ppf returns an index to the bucket for which the input value is best.
 """
 from ans import ANSCoder
 from scipy.stats import norm, beta, binom
@@ -283,12 +286,13 @@ def beta_binomial_obs_pop(precision):
         return pop
     return obs_pop
 
-
-
-
 #
 # Buckets, CDF and PPF for gaussians (used for the VAE)
 #
+
+# to speed up computations, we can keep dictionnaries of buckets for standard gaussians and centers
+bucket_cache = {}
+centers_cache = {}
 
 def round_nearest_integer(array):
     return int(np.around(array))
@@ -312,8 +316,3 @@ def gaussian_latent_ppf(mean, stdd, prior_precision, posterior_precision):
 def standard_gaussian_centers(precision):
     centers = np.float32(norm.ppf(( np.arange(1 << precision) + 0.5) / (1 << precision)))
     return centers
-
-if __name__ == '__main__':
-
-    buckets = create_beta_binomial_buckets(10, 600, 400, 8)
-    print('Success')

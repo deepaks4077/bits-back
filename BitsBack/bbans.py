@@ -1,5 +1,5 @@
 """
-This class contains the code to encode/decode data using BB-ANS
+This class contains the code to encode/decode data using BB-ANS with a VAE
 """
 
 from ans import ANSCoder

@@ -1,58 +1,24 @@
 """
-This file contains pop and append method for BBANS using a model inheriting from 
-nn.Module from PyTorch.
+Contains experiments on the binarized mnist dataset
 """
-
 import torch
 import numpy as np
-from numpy.random import RandomState
-
-from numpy_torch_interface import torch_to_numpy_function
-
-from bbans import VAE_append, VAE_pop
-from ans import ANSCoder
 import distributions
 import bin_vae_original
 import datasets
+from bernoulli_bbans import build_bernoulli_bbans
+from numpy.random import RandomState
+from numpy_torch_interface import torch_to_numpy_function
+from bbans import VAE_append, VAE_pop
+from ans import ANSCoder
 
-
-def build_append_pop(prior_precision, bernoulli_precision, q_precision, hidden_dim, latent_dim, model, path_to_params:str):
-    """
-    Returns the append and pop functions for a binary mnist bbans implementation
-    using Bernoulli distribution for the symbols and pixels
-    """
-    # load trained model
-    model.load_state_dict(torch.load(path_to_params))
-
-    # obtain numpy compatible functions
-    generative_model = torch_to_numpy_function(model.decode)
-    recognition_model = torch_to_numpy_function(model.encode)
-
-    #append and pop using bernoulli
-    obs_append = distributions.bernoulli_obs_append(bernoulli_precision)
-    obs_pop = distributions.bernoulli_obs_pop(bernoulli_precision)
-
-    #return append, pop for VAE
-
-    latent_shape = (latent_dim,)
-
-    append = VAE_append(latent_shape, generative_model, recognition_model,
-                        obs_append, prior_precision, q_precision)
-
-    pop = VAE_pop(latent_shape, generative_model, recognition_model,
-             obs_pop, prior_precision, q_precision)
-
-    return append, pop
-
-
-
-
-
-
-if __name__ == '__main__':
+def original_bernoulli_example(number_images):
     """
     Test the binary mnist on VAE BBANS 
     """
+
+    rng = RandomState(0)
+    image_count = number_images
 
     prior_precision = 8
     bernoulli_precision = 12
@@ -64,18 +30,19 @@ if __name__ == '__main__':
     ans = ANSCoder()
 
     model = bin_vae_original.BinaryVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
+    model.load_state_dict(torch.load('OriginalParameters/torch_binary_vae_params_new'))
 
-    path_to_params = 'OriginalParameters/torch_binary_vae_params_new'
+    generative_model = torch_to_numpy_function(model.decode)
+    recognition_model = torch_to_numpy_function(model.encode)
 
-    append, pop = build_append_pop(prior_precision, bernoulli_precision, q_precision, hidden_dim, latent_dim, model, path_to_params)
+    latent_shape = (latent_dim,)
+
+    append, pop = build_bernoulli_bbans(prior_precision, bernoulli_precision, q_precision, generative_model, recognition_model, latent_shape)
 
 
     #
     # Get images to compress
     #
-
-    rng = RandomState(0)
-    image_count = 20
 
     images = datasets.get_binarized_MNIST(rng, False)[:image_count]
     images = [image.flatten() for image in images]

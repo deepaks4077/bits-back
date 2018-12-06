@@ -1,3 +1,8 @@
+"""
+Delete me before submission.
+This file contains the original vae for the mnist dataset using beta binomial latent variables
+"""
+
 import torch
 import torch.utils.data
 from torch import nn, optim, lgamma
