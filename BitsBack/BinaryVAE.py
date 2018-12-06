@@ -88,28 +88,31 @@ class BinaryVAE(nn.Module):
         x_reshaped = x.view(-1, self.data_size)
         h0 = self.fc1(x_reshaped)
         h1 = F.relu(h0)
-        return self.fc21(h1), self.fc22(h1)
+        return self.fc21(h1), torch.exp(self.fc22(h1))
 
     def decode(self, z):
         h3 = F.relu(self.fc3(z))
-        print(h3)
         return self.sigmoid(self.fc4(h3))
 
-    def reparameterize(self, mu, logvar):
-        std = torch.exp(logvar)
-        eps = torch.randn_like(std)
-        return eps.mul(std).add_(mu)
+    def reparameterize(self, mu, std):
+        if self.training:
+            eps = torch.randn_like(std)
+            res = eps.mul(std).add_(mu)
+        else:
+            res = mu
+        
+        return res
 
     def forward(self, x):
-        mu, logvar = self.encode(x.view(-1, self.data_size * self.n_channels))
-        z = self.reparameterize(mu, logvar)
-        return self.decode(z), z, mu, logvar
+        mu, std = self.encode(x.view(-1, self.data_size * self.n_channels))
+        z = self.reparameterize(mu, std)
+        return self.decode(z), z, mu, std
 
     # Reconstruction + KL divergence losses summed over all elements and batch
     def loss(self, x):
         #recon_x, z, mu, logvar = self.forward(x)
-        mu, logvar = self.encode(x)
-        z = self.reparameterize(mu, logvar)
+        mu, std = self.encode(x)
+        z = self.reparameterize(mu, std)
         recon_x = self.decode(z)
         #print(recon_x, z, mu, logvar)
         dist = Bernoulli(recon_x)
@@ -117,7 +120,7 @@ class BinaryVAE(nn.Module):
         a = torch.tensor([0.0]).to(device)
         b = torch.tensor([1.0]).to(device)
         p_z = torch.sum(Normal(a, b).log_prob(z), dim=1)
-        q_z = torch.sum(Normal(mu, torch.exp(logvar)).log_prob(z), dim=1)
+        q_z = torch.sum(Normal(mu, std).log_prob(z), dim=1)
         
         #KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim = 1)
 
@@ -125,7 +128,7 @@ class BinaryVAE(nn.Module):
 
         return res
 
-    def lossv2(self, x):
+    def lossv2(self, x): # need to change this to handle variance instead of logvar
         recon_x, z, mu, logvar = self.forward(x)
         BCE = F.binary_cross_entropy(recon_x, 
                                      x.view(-1, self.data_size * self.n_channels), 
@@ -176,7 +179,7 @@ def test(model, epoch, data_loader):
             for i, (data, _) in enumerate(data_loader):
                 experiment.set_step(i)
                 data = data.to(device)
-                recon_x, z, mu, logvar = model(data)
+                recon_x, z, mu, std = model(data)
 
 def run():
 
