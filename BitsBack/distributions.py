@@ -298,7 +298,11 @@ def round_nearest_integer(array):
     return int(np.around(array))
 
 def standard_gaussian_buckets(precision):
-    buckets = np.float32(norm.ppf(np.arange(1 << precision + 1) / (1 << precision)))
+    if precision in bucket_cache:
+        buckets = bucket_cache[precision]
+    else:
+        buckets = np.float32(norm.ppf(np.arange(1 << precision + 1) / (1 << precision)))
+        bucket_cache[precision] = buckets
     return buckets
 
 def gaussian_latent_cdf(mean, stdd, prior_precision, posterior_precision):
@@ -314,5 +318,10 @@ def gaussian_latent_ppf(mean, stdd, prior_precision, posterior_precision):
     return ppf
 
 def standard_gaussian_centers(precision):
-    centers = np.float32(norm.ppf(( np.arange(1 << precision) + 0.5) / (1 << precision)))
+    if precision in centers_cache:
+        centers = centers_cache[precision]
+    else:
+        centers = np.float32(norm.ppf(( np.arange(1 << precision) + 0.5) / (1 << precision)))
+        centers_cache[precision] = centers
+        
     return centers
