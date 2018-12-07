@@ -3,7 +3,7 @@ Method: BBANS using VAE with Beta Binomial latent variables
 
 Experimental setup:
 RandomState seed: 0
-Number of images: 100
+Number of images: 200
 Image shape: (28, 28)
 Model path: OriginalParameters/torch_vae_beta_binomial_params
 Encode/Decode successful: True
@@ -15,6 +15,6 @@ Latent dimensions: 50
 Hidden dimensions: 200
 
 Results:
-Original size: 2508800 bits
-Encoded size: 90112 bits
-Bits per pixel: 1.1289795918367347
+Original size: 5017600 bits
+Encoded size: 176800 bits
+Bits per pixel: 1.1173469387755102
