@@ -16,28 +16,45 @@ from result import Result
 
 def original_bbinomial_example(number_images, result_path:str):
     """
-    Run a test session
+    Run the original beta binomial VAE
     """
+    path = 'OriginalParameters\\torch_vae_beta_binomial_params'
+    latent_dim = 50
+    hidden_dim = 200
+    model = vae_original.BetaBinomialVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
+    model.load_state_dict(torch.load(path, map_location='cpu'))
+    model.eval()
+    beta_binomial_experiment(number_images, result_path, latent_dim, hidden_dim, model, path)
+
+def beta_binomial_100_200_50_20_False_5(number_images, result_path:str):
+    """
+    Run the experiment with our VAE with hyper parameters 200, 50, 20, e^-5
+    """
+    path = 'Parameters\\beta_binomial_100_200_50_20_False_5'
+    latent_dim = 50
+    hidden_dim = 200
+    model = vae_original.BetaBinomialVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
+    model.load_state_dict(torch.load(path, map_location='cpu'))
+    model.eval()
+    beta_binomial_experiment(number_images, result_path, latent_dim, hidden_dim, model, path)
+
+def beta_binomial_experiment(number_images, result_path, latent_dim, hidden_dim, model, path):
+    """
+    Run a beta binomial experiment with the given model
+    """
+
     seed = 0
     rng = RandomState(seed)
     image_count = number_images
-
     prior_precision = 8
     beta_binomial_precision = 14
     q_precision = 14
 
     random_count = 50
 
-    latent_dim = 50
-    hidden_dim = 200
-
     number_buckets = 255 #(trials in the beta-binomial distribution, parameter n. It has to be less than 1 << beta_binomial_precision)
 
     ans = ANSCoder()
-
-    model = vae_original.BetaBinomialVAE(hidden_dim=hidden_dim, latent_dim=latent_dim)
-    model.load_state_dict(torch.load('OriginalParameters\\torch_vae_beta_binomial_params', map_location='cpu'))
-    model.eval()
 
     # obtain numpy compatible functions
     generative_model = torch_to_numpy_function(model.decode)

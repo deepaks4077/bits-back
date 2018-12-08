@@ -1,0 +1,20 @@
+Results for experiment Compression of MNIST dataset using BBANS with Beta Binomial distribution
+Method: BBANS using VAE with Beta Binomial latent variables
+
+Experimental setup:
+RandomState seed: 0
+Number of images: 200
+Image shape: (28, 28)
+Model path: OriginalParameters/torch_vae_beta_binomial_params
+Encode/Decode successful: True
+Number of random bits: 1600
+Prior precision: 8
+Latent precision: 14
+Posterior precision: 14
+Latent dimensions: 50
+Hidden dimensions: 200
+
+Results:
+Original size: 5017600 bits
+Encoded size: 177216 bits
+Bits per pixel: 1.12
