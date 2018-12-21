@@ -20,7 +20,7 @@ __authors__ = ["Deepak Sharma"]
 from typing import Tuple, List, Union, Dict
 import argparse
 import numpy as np
-from comet_ml import Experiment
+#from comet_ml import Experiment
 import torch
 import torch.utils.data
 from torch import nn, optim
@@ -56,8 +56,8 @@ kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
 model_filename_suffix = "{}_{}_{}_{}_{}_{}".format(args.batch_size, args.hidden_dim, args.latent_dim, args.epochs, args.no_cuda, abs(args.learning_rate))
 model_filename = "{}_{}".format(args.model_filename_prefix, model_filename_suffix)
 
-experiment = Experiment(api_key="Gncqbz3Rhfy3MZJBcX7xKVJoo", project_name="comp551", workspace="deepak-sharma-mail-mcgill-ca")
-experiment.log_multiple_params(vars(args))
+#experiment = Experiment(api_key="Gncqbz3Rhfy3MZJBcX7xKVJoo", project_name="comp551", workspace="deepak-sharma-mail-mcgill-ca")
+#experiment.log_multiple_params(vars(args))
 
 class Randomise:
     def __call__(self, pic):
