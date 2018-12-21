@@ -20,7 +20,7 @@ __authors__ = ["Deepak Sharma"]
 from typing import Tuple, List, Union, Dict
 import argparse
 import numpy as np
-#from comet_ml import Experiment
+# from comet_ml import Experiment
 import torch
 import torch.utils.data
 from torch import nn, optim
@@ -56,7 +56,7 @@ kwargs = {'num_workers': 2, 'pin_memory': True} if args.cuda else {}
 model_filename_suffix = "{}_{}_{}_{}_{}_{}".format(args.batch_size, args.hidden_dim, args.latent_dim, args.epochs, args.no_cuda, abs(args.learning_rate))
 model_filename = "{}_{}".format(args.model_filename_prefix, model_filename_suffix)
 
-#experiment = Experiment(api_key="Gncqbz3Rhfy3MZJBcX7xKVJoo", project_name="comp551", workspace="deepak-sharma-mail-mcgill-ca")
+#experiment = Experiment(api_key="<your api key>", project_name="comp551", workspace="<your workspace>")
 #experiment.log_multiple_params(vars(args))
 
 class Randomise:
@@ -110,25 +110,22 @@ class BinaryVAE(nn.Module):
 
     # Reconstruction + KL divergence losses summed over all elements and batch
     def loss(self, x):
-        #recon_x, z, mu, logvar = self.forward(x)
         mu, std = self.encode(x)
         z = self.reparameterize(mu, std)
         recon_x = self.decode(z)
-        #print(recon_x, z, mu, logvar)
         dist = Bernoulli(recon_x)
         l = torch.sum(dist.log_prob(x.view(-1, 784)), dim=1)
         a = torch.tensor([0.0]).to(device)
         b = torch.tensor([1.0]).to(device)
         p_z = torch.sum(Normal(a, b).log_prob(z), dim=1)
         q_z = torch.sum(Normal(mu, std).log_prob(z), dim=1)
-        
-        #KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim = 1)
 
         res = -torch.mean(l + p_z - q_z) * np.log2(np.e) / 784
 
         return res
 
-    def lossv2(self, x): # need to change this to handle variance instead of logvar
+    # Using Appendix B of AEVB paper
+    def lossv2(self, x):
         recon_x, z, mu, logvar = self.forward(x)
         BCE = F.binary_cross_entropy(recon_x, 
                                      x.view(-1, self.data_size * self.n_channels), 
@@ -147,39 +144,31 @@ def train(model, epoch, data_loader, optimizer, log_interval=10):
     model.train()
     train_loss = 0
     i = 0
-    with experiment.train():
-        for batch_idx, (data, _) in enumerate(data_loader):
-            experiment.set_step(batch_idx)
-            
-            data = data.to(device)
-            optimizer.zero_grad()
-            loss = model.loss(data)
-            loss.backward()
-            train_loss += loss.item()
-            optimizer.step()
-            i += 1
-            experiment.log_metric("batch_loss", loss.item())
-            if batch_idx % log_interval == 0:
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                    epoch, batch_idx * len(data), len(data_loader.dataset),
-                    100. * batch_idx / len(data_loader),
-                    loss.item()))
+    for batch_idx, (data, _) in enumerate(data_loader): 
+        data = data.to(device)
+        optimizer.zero_grad()
+        loss = model.loss(data)
+        loss.backward()
+        train_loss += loss.item()
+        optimizer.step()
+        i += 1
+        if batch_idx % log_interval == 0:
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx * len(data), len(data_loader.dataset),
+                100. * batch_idx / len(data_loader),
+                loss.item()))
 
     print('====> Epoch: {} Average loss: {:.4f}'.format(
           epoch, train_loss / len(data_loader)))
-
-    experiment.log_metric("training_loss", train_loss/len(data_loader), epoch)
 
 
 def test(model, epoch, data_loader):
     model.eval()
     test_loss = 0
-    with experiment.test():
-        with torch.no_grad():
-            for i, (data, _) in enumerate(data_loader):
-                experiment.set_step(i)
-                data = data.to(device)
-                recon_x, z, mu, std = model(data)
+    with torch.no_grad():
+        for i, (data, _) in enumerate(data_loader):
+            data = data.to(device)
+            recon_x, z, mu, std = model(data)
 
 def run():
 
@@ -203,7 +192,6 @@ def run():
     try:
         for epoch in range(1, args.epochs + 1):
             train(model, epoch, train_loader, optimizer)
-            experiment.log_epoch_end(epoch, step=None)
             test(model, epoch, test_loader)
             sample = model.sample(64)
             save_image(sample.cpu().view(64, 1, 28, 28),

@@ -1,4 +1,3 @@
-#from comet_ml import Experiment
 import argparse
 import torch
 import torch.utils.data
@@ -29,20 +28,11 @@ args = parser.parse_args()
 model_filename_suffix = "{}_{}_{}_{}_{}".format(args.batch_size, args.hidden_dim, args.latent_dim, args.epochs, abs(args.learning_rate))
 model_filename = "{}_{}".format(args.model_filename_prefix, model_filename_suffix)
 
-#experiment = Experiment(api_key="Gncqbz3Rhfy3MZJBcX7xKVJoo", project_name="bits-back", workspace="deepak-sharma-mail-mcgill-ca")
-#experiment.log_multiple_params(vars(args))
-
 torch.manual_seed(args.seed)
 
 def beta_binomial_log_pdf(k, n, alpha, beta):
     numer = lgamma(n+1) + lgamma(k + alpha) + lgamma(n - k + beta) + lgamma(alpha + beta)
     denom = lgamma(k+1) + lgamma(n - k + 1) + lgamma(n + alpha + beta) + lgamma(alpha) + lgamma(beta)
-
-    #print("numer autograd = {}".format(numer))
-    #print("numer  = {}".format(np.where(torch.isinf(numer) == 1)))
-    #print("denom  = {}".format(np.where(torch.isinf(denom) == 1)))
-    #print("numer - denom = {}".format(np.where(torch.isnan(numer - denom) == 1)))
-
     return numer - denom
 
 
@@ -98,7 +88,6 @@ class BetaBinomialVAE(nn.Module):
                                   x_alpha, x_beta)
         l = torch.sum(l, dim=1)
 
-        #print("value of l = {}".format(l))
         p_z = torch.sum(Normal(self.prior_mean, self.prior_std).log_prob(z), dim=1)
         q_z = torch.sum(Normal(z_mu, z_std).log_prob(z), dim=1)
         return -torch.mean(l + p_z - q_z) * np.log2(np.e) / 784.
@@ -159,7 +148,6 @@ def test(model, device, epoch, data_loader):
     print('\nEpoch: {}\tTest loss: {:.6f}\n\n'.format(
         epoch, np.mean(losses)
     ))
-    #experiment.log_metric("training_loss", np.mean(losses), epoch)
 
 
 if __name__ == '__main__':

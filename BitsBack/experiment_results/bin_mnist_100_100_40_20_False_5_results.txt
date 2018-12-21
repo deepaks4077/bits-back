@@ -1,0 +1,20 @@
+Results for experiment Compression of binarized MNIST dataset using BBANS with Bernoulli distribution
+Method: BBANS using VAE with Bernoulli latent variables
+
+Experimental setup:
+RandomState seed: 0
+Number of images: 200
+Image shape: (28, 28)
+Model path: Parameters/bb_binary_vae_100_100_40_20_False_5
+Encode/Decode successful: True
+Number of random bits: 384
+Prior precision: 8
+Latent precision: 12
+Posterior precision: 14
+Latent dimensions: 40
+Hidden dimensions: 100
+
+Results:
+Original size: 5017600 bits
+Encoded size: 33344 bits
+Bits per pixel: 0.21020408163265306
